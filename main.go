@@ -8,7 +8,7 @@ import (
     "net/http"
     "os"
 
-    _ "github.com/go-sql-driver/mysql"
+    _ "github.com/lib/pq" // Importa el driver de PostgreSQL
     "github.com/gorilla/mux"
 )
 
@@ -26,8 +26,8 @@ func conectarBD() (*sql.DB, error) {
     dbHost := os.Getenv("DB_HOST")
     dbName := os.Getenv("DB_NAME")
 
-    dataSourceName := fmt.Sprintf("%s:%s@tcp(%s)/%s", dbUser, dbPass, dbHost, dbName)
-    db, err := sql.Open("mysql", dataSourceName)
+    dataSourceName := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", dbUser, dbPass, dbHost, dbName)
+    db, err := sql.Open("postgres", dataSourceName)
     if err != nil {
         return nil, err
     }
@@ -79,7 +79,7 @@ func crearUsuario(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    stmt, err := db.Prepare("INSERT INTO usuarios(nombre, email) VALUES(?, ?)")
+    stmt, err := db.Prepare("INSERT INTO usuarios(nombre, email) VALUES($1, $2)")
     if err != nil {
         http.Error(w, err.Error(), http.StatusInternalServerError)
         return

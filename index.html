@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Usuarios</title>
+    <title>User Management</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -41,38 +41,43 @@
             padding: 10px;
             margin-bottom: 10px;
         }
+
+        .updateBtn, .deleteBtn {
+            margin-left: 5px;
+        }
     </style>
 </head>
 <body>
 
-    <h1>Gestión de Usuarios</h1>
+    <h1>User Management</h1>
 
-    <h2>Lista de Usuarios</h2>
+    <h2>User List</h2>
     <table id="usuariosTable">
         <thead>
             <tr>
                 <th>ID</th>
-                <th>Nombre</th>
+                <th>Name</th>
                 <th>Email</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
-            <!-- Los usuarios serán insertados aquí -->
+            <!-- Users will be inserted here -->
         </tbody>
     </table>
 
-    <h2>Agregar Usuario</h2>
+    <h2>Add User</h2>
     <form id="usuarioForm">
-        <input type="text" id="nombre" placeholder="Nombre" required>
+        <input type="text" id="nombre" placeholder="Name" required>
         <input type="email" id="email" placeholder="Email" required>
-        <button type="submit">Agregar</button>
+        <button type="submit">Add</button>
     </form>
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             const API_URL = "/usuarios";
 
-            // Obtener y mostrar la lista de usuarios
+            // Get and display the list of users
             function obtenerUsuarios() {
                 fetch(API_URL)
                     .then(response => response.json())
@@ -84,12 +89,36 @@
                             row.insertCell(0).innerText = usuario.id;
                             row.insertCell(1).innerText = usuario.nombre;
                             row.insertCell(2).innerText = usuario.email;
+
+                            // Add actions (Update/Delete)
+                            let actionsCell = row.insertCell(3);
+                            let updateBtn = document.createElement("button");
+                            updateBtn.innerText = "Update";
+                            updateBtn.classList.add("updateBtn");
+                            updateBtn.onclick = function() {
+                                const newName = prompt("Enter new name:", usuario.nombre);
+                                const newEmail = prompt("Enter new email:", usuario.email);
+                                if (newName && newEmail) {
+                                    updateUser(usuario.id, newName, newEmail);
+                                }
+                            };
+                            actionsCell.appendChild(updateBtn);
+
+                            let deleteBtn = document.createElement("button");
+                            deleteBtn.innerText = "Delete";
+                            deleteBtn.classList.add("deleteBtn");
+                            deleteBtn.onclick = function() {
+                                if (confirm("Are you sure you want to delete this user?")) {
+                                    deleteUser(usuario.id);
+                                }
+                            };
+                            actionsCell.appendChild(deleteBtn);
                         });
                     })
-                    .catch(error => console.error("Error al obtener usuarios:", error));
+                    .catch(error => console.error("Error fetching users:", error));
             }
 
-            // Enviar nuevo usuario al servidor
+            // Add new user to the server
             document.getElementById("usuarioForm").addEventListener("submit", function(event) {
                 event.preventDefault();
                 const nombre = document.getElementById("nombre").value;
@@ -104,13 +133,42 @@
                 })
                 .then(response => response.json())
                 .then(data => {
-                    alert("Usuario agregado exitosamente");
+                    alert("User added successfully");
                     obtenerUsuarios();
                 })
-                .catch(error => console.error("Error al agregar usuario:", error));
+                .catch(error => console.error("Error adding user:", error));
             });
 
-            // Inicializar la lista de usuarios
+            // Update user
+            function updateUser(id, nombre, email) {
+                fetch(`${API_URL}/${id}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ nombre: nombre, email: email })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert("User updated successfully");
+                    obtenerUsuarios();
+                })
+                .catch(error => console.error("Error updating user:", error));
+            }
+
+            // Delete user
+            function deleteUser(id) {
+                fetch(`${API_URL}/${id}`, {
+                    method: "DELETE"
+                })
+                .then(() => {
+                    alert("User deleted successfully");
+                    obtenerUsuarios();
+                })
+                .catch(error => console.error("Error deleting user:", error));
+            }
+
+            // Initialize the user list
             obtenerUsuarios();
         });
     </script>

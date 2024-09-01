@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-proofpoint-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: demo-proofpoint
+  template:
+    metadata:
+      labels:
+        app: demo-proofpoint
+    spec:
+      containers:
+      - name: demo-proofpoint-container
+        image: ansa2002/demo-proofpoint:latest
+        env:
+        - name: DB_USER
+          value: "admin"  # Usuario de la base de datos MySQL en RDS
+        - name: DB_PASS
+          value: "Ansa200202"  # Contraseña de la base de datos MySQL en RDS
+        - name: DB_HOST
+          value: "demoproofpointbootcampdb.cngi24gie4f0.us-east-1.rds.amazonaws.com"  # Endpoint de la base de datos MySQL en RDS
+        - name: DB_NAME
+          value: "demoproofpointbootcampdb"  # Nombre de la base de datos MySQL en RDS
+        ports:
+        - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-proofpoint-service
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-subnets: subnet-0fb9b4c6718b70270,subnet-01a0578ebc388461e,subnet-0c19cb68c19bd811f  # Subnets donde el balanceador de carga estará disponible
+spec:
+  selector:
+    app: demo-proofpoint
+  ports:
+    - protocol: TCP
+      port: 80  # Puerto por el cual se expondrá el servicio
+      targetPort: 8080  # Puerto en el que tu contenedor escucha
+  type: LoadBalancer
